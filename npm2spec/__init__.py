@@ -16,6 +16,7 @@
  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
  (C) 2012 - Pierre-Yves Chibon <pingou@pingoured.fr>
+ (C) 2014 - Ralph Bean <rbean@redhat.com>
 """
 
 import argparse
@@ -30,7 +31,7 @@ from subprocess import Popen, PIPE
 from tarfile import TarError
 
 logging.basicConfig()
-LOG = logging.getLogger('Pypi2spec')
+LOG = logging.getLogger('NPM2spec')
 #LOG.setLevel('DEBUG')
 __version__ = '0.3.0'
 
@@ -89,7 +90,7 @@ def move_sources(fullpath, sources):
 
 
 def get_packager_name():
-    """ Query rpm to retrieve a potential packager name from the 
+    """ Query rpm to retrieve a potential packager name from the
     .rpmmacros.
     """
     packager = get_rpm_tag('%packager')
@@ -100,7 +101,7 @@ def get_packager_name():
         return ''
 
 def get_packager_email():
-    """ Query rpm to retrieve a potential packager email from the 
+    """ Query rpm to retrieve a potential packager email from the
     .rpmmacros.
     """
     packager = get_rpm_tag('%packager')
@@ -112,7 +113,7 @@ def get_packager_email():
 
 
 class Settings(object):
-    """ Pypi2spec user config Setting"""
+    """ NPM2spec user config Setting"""
     # Editor to use in the spec
     packager = get_packager_name()
     # Editor email to use in the spec
@@ -127,7 +128,7 @@ class Settings(object):
                         'packager': self.packager,
                         'email': self.email,
                     }
-        self.load_config('.config/pypi2spec', 'main')
+        self.load_config('.config/npm2spec', 'main')
 
     def load_config(self, configfile, sec):
         """Load the configuration in memory.
@@ -185,14 +186,14 @@ class Settings(object):
                 parser.set(section, name, self._dict[name])
 
 
-class Pypi2specError(Exception):
-    """ Pypi2specError class
+class NPM2specError(Exception):
+    """ NPM2specError class
     Template for all the error of the project
     """
 
     def __init__(self, message):
         """ Constructor. """
-        super(Pypi2specError, self).__init__(message)
+        super(NPM2specError, self).__init__(message)
         self.message = message
 
     def __str__(self):
@@ -200,14 +201,14 @@ class Pypi2specError(Exception):
         return str(self.message)
 
 
-class Pypi2spec(object):
-    """ Pypi2spec main class whose goal is to get the all the info
+class NPM2spec(object):
+    """ NPM2spec main class whose goal is to get the all the info
     needed for the spec file.
     """
 
     def __init__(self, name):
         """ Constructor.
-        :arg name, the name of the library on the pypi website.
+        :arg name, the name of the library on the npm website.
         """
         self.name = name
         self.description = ''
@@ -215,37 +216,10 @@ class Pypi2spec(object):
         self.version = ''
         self.summary = ''
         self.license = ''
-        self.url = 'http://pypi.python.org/pypi/%s' % name
+        self.url = 'https://www.npmjs.org/package/%s' % name
         self.source0 = ''
         self.source = ''
         self.arch = False
-
-    def determine_arch(self):
-        """ Determine if the package is arch or noarch by looking at the
-        sources.
-        Set arch to True if the package is arch dependant.
-        Set arch to False if the package is noarch.
-        Let arch to None if could not determine.
-        """
-        self.log.info('Determining if the package is arch dependant or not')
-        extensions = ['c', 'C', 'cp', 'cpp', 'h', 'H', ]
-        if os.path.exists(self.name):
-            for root, dirs, files in os.walk(self.name):
-                for entry in files:
-                    if '.' in entry:
-                        extension = entry.rsplit('.', 1)[1]
-                        if extension in extensions \
-                                or 'f' in extension \
-                                or 'F' in extension:
-                            self.arch = True
-                            self.log.info('Package is arch dependant')
-                            return
-            self.arch = False
-            self.log.info('Package is not arch dependant')
-            return
-        else:
-            self.log.info(
-                'Could not find the extracted source to search the arch')
 
     def download(self, force=False):
         """ Download the source of the package into the source directory
@@ -264,13 +238,13 @@ class Pypi2spec(object):
 
         url = self.source0.rsplit('/', 1)[0]
         url = '{url}/{source}'.format(url=url, source=self.source)
-        self.log.info('Downloading %s' % url)
+        print 'Downloading %s' % url
 
         try:
             remotefile = urllib2.urlopen(url)
         except urllib2.HTTPError, err:
             self.log.debug(err)
-            raise Pypi2specError('Could not retrieve source: %s' % url)
+            raise NPM2specError('Could not retrieve source: %s' % url)
         localfile = open(sources, 'w')
         localfile.write(remotefile.read())
         localfile.close()
@@ -302,62 +276,27 @@ class Pypi2spec(object):
             self.log.debug('ERROR: %s' % err)
 
     def retrieve_info(self):
-        """ Retrieve all the information from pypi to fill up the spec
+        """ Retrieve all the information from npm to fill up the spec
         file.
         """
-        import rdflib
-        graph = rdflib.Graph()
-        try:
-            graph.parse('http://pypi.python.org/pypi?:action=doap&name=%s' % \
-                self.name, format='xml')
-        except urllib2.HTTPError, err:
-            self.log.debug('ERROR while downloading the doap file:\n  %s'
-                % err)
-            raise Pypi2specError('Could not retrieve information for the'
-                'project "%s". Did you make a typo?' % self.name)
-        doap = rdflib.Namespace('http://usefulinc.com/ns/doap#')
-        rdfs = rdflib.Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#')
-        version_node = graph.value(predicate=rdfs['type'],
-            object=doap['Version'])
-        self.version = graph.value(subject=version_node,
-            predicate=doap['revision'])
-        project_node = graph.value(predicate=rdfs['type'],
-            object=doap['Project'])
-        self.summary = graph.value(subject=project_node,
-            predicate=doap['shortdesc'])
-        self.description = graph.value(subject=project_node,
-            predicate=doap['description'])
-        self.source0 = graph.value(subject=project_node,
-            predicate=doap['download-page'])
+        import requests
 
-        if not self.source0 \
-            or os.path.splitext(self.source0)[1] not in \
-            ['.gz', '.zip', '.bz2']:
-            pypi_base = 'http://pypi.python.org/packages/source/'
-            self.source0 = pypi_base + '%s/%s/%s-%s' % \
-                (self.name[0], self.name, self.name, self.version)
+        url = "http://registry.npmjs.org/%s" % self.name
+        response = requests.get(url)
+        data = response.json()
 
-            url_ext = False
-            for ext in ['tar.gz', 'zip', 'tar.bz2']:
-                url = '%s.%s' % (self.source0, ext)
-                self.log.debug(url)
-                try:
-                    urllib2.urlopen(url)
-                    url_ext = ext
-                except urllib2.HTTPError, err:
-                    self.log.debug(err)
-            if url_ext is not False:
-                self.source0 = '%s.%s' % (self.source0, url_ext)
-                self.source = '%s-%s.%s' % (self.name, self.version,
-                    url_ext)
-            else:
-                raise Pypi2specError('No tarball or zip file could be '
-                    'found for this package: %s' % self.name)
-        else:
-            self.source = '%s-%s.tar.gz' % (self.name, self.version)
+        versions = [tuple(s.split('.')) for s in data['versions'].keys()]
+        self.version = '.'.join(sorted(versions)[-1])
+        self.source0 = data['versions'][self.version]['dist']['tarball']
+        self.source = self.source0.rsplit('/')[-1]
+        self.summary = data['description']
+        self.description = data['readme']
+        self.license = data['license']
+        self.deps = data['versions'][self.version]['dependencies']
+        self.deps.update(data['versions'][self.version]['peerDependencies'])
+        self.dev_deps = data['versions'][self.version]['devDependencies']
 
-
-class Pypi2specUI(object):
+class NPM2specUI(object):
     """ Class handling the user interface. """
 
     def __init__(self):
@@ -369,11 +308,11 @@ class Pypi2specUI(object):
     def setup_parser(self):
         """ Command line parser. """
         self.parser = argparse.ArgumentParser(usage='%(prog)s [options]',
-                prog='pypi2spec')
+                prog='npm2spec')
         self.parser.add_argument('--version', action='version',
             version='%(prog)s ' + __version__)
         self.parser.add_argument('package',
-            help='Name of the pypi library to package.')
+            help='Name of the npm library to package.')
         self.parser.add_argument('--python3', action='store_true',
             help='Create a specfile for both python2 and python3.')
         self.parser.add_argument('--verbose', action='store_true',
@@ -396,28 +335,27 @@ class Pypi2specUI(object):
             if args.debug:
                 self.log.setLevel('DEBUG')
 
-            pypi = Pypi2spec(args.package)
-            pypi.retrieve_info()
-            pypi.download()
-            pypi.extract_sources()
-            pypi.determine_arch()
-            pypi.remove_sources()
+            npm = NPM2spec(args.package)
+            npm.retrieve_info()
+            npm.download()
+            npm.extract_sources()
+            npm.remove_sources()
             settings = Settings()
-            spec = Spec(settings, pypi, python3=args.python3)
+            spec = Spec(settings, npm, python3=args.python3)
             spec.fill_spec_info()
             spec.get_template()
             spec.write_spec()
-        except Pypi2specError, err:
+        except NPM2specError, err:
             print err
 
 
 def main():
     """ Entry point used in the setup.py.
-    This just calls the main function in Pypi2specUI.
+    This just calls the main function in NPM2specUI.
     """
-    return Pypi2specUI().main()
+    return NPM2specUI().main()
 
 if __name__ == '__main__':
     #import sys
-    #sys.argv.append('pypi2spec')
+    #sys.argv.append('npm2spec')
     main()

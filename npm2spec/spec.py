@@ -15,6 +15,7 @@
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 # (C) 2012 - Pierre-Yves Chibon <pingou@pingoured.fr>
+# (C) 2014 - Ralph Bean <rbean@redhat.com>
 
 """
 Spec class, handles the read/write of the spec file
@@ -28,9 +29,9 @@ import sys
 import textwrap
 from jinja2 import Template
 try:
-    from pypi2spec import get_logger, get_rpm_tag, Pypi2specError
+    from npm2spec import get_logger, get_rpm_tag, NPM2specError
 except ImportError:
-    from __init__ import get_logger, get_rpm_tag, Pypi2specError
+    from __init__ import get_logger, get_rpm_tag, NPM2specError
 
 
 def format_description(description):
@@ -128,15 +129,14 @@ class Spec:
         self.__dict['date'] = datetime.datetime.now(
             ).strftime("%a %b %d %Y")
         self.__dict['python3'] = self.python3
+        self.__dict['deps'] = self.package.deps
+        self.__dict['dev_deps'] = self.package.dev_deps
 
     def get_specfile(self):
         """ Return the path to the spec file.
         """
         specdir = get_rpm_tag('_specdir')
-        if self.package.name.startswith('python-'):
-            specname = '%s.spec' % self.__dict['barename']
-        else:
-            specname = 'python-%s.spec' % self.__dict['barename']
+        specname = 'nodejs-%s.spec' % self.__dict['barename']
         return '%s/%s' % (specdir, specname)
 
     def read_specfile(self):
@@ -167,7 +167,7 @@ class Spec:
             self.spec = mytemplate.render(self.__dict)
         except IOError, err:
             self.log.debug('ERROR: %s' % err)
-            raise Pypi2specError('Cannot read the file %s' % template)
+            raise NPM2specError('Cannot read the file %s' % template)
 
     def write_spec(self, verbose=False):
         """ Write down the spec to the spec directory as returned by rpm.
