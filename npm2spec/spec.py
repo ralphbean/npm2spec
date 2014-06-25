@@ -106,7 +106,6 @@ class Spec:
         """ Fills the different variable required for the spec file. """
         self.log.info('Filling spec variable from info collected')
 
-        self.__dict['modname'] = self.package.name
         self.__dict['barename'] = self.package.name.replace('.', '-')
         if self.package.name.startswith('python-'):
             self.__dict['name'] = self.__dict['barename']
@@ -122,7 +121,7 @@ class Spec:
         self.__dict['URL'] = self.package.url
         self.__dict['source0'] = self.package.source0
         self.__dict['_source0'] = self.package.source0\
-                .replace(self.package.name, "%{modname}")\
+                .replace(self.package.name, "%{barename}")\
                 .replace(self.package.version, "%{version}")
         self.__dict['packager'] = self.settings.get('packager')
         self.__dict['email'] = self.settings.get('email')

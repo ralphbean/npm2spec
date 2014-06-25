@@ -1,5 +1,6 @@
 %global build_docs 0
 %global enable_tests 0
+%global barename {{barename}}
 
 Name:               nodejs-{{barename}}
 Version:            {{version}}
@@ -12,9 +13,9 @@ URL:                {{URL}}
 Source0:            {{_source0}}
 
 BuildRequires:      nodejs-packaging >= 6
+BuildRequires:      nodejs-grunt-cli
 {% for depname, version in deps.items() %}
 BuildRequires:      nodejs-{{depname}}{% endfor %}
-
 {% for depname, version in deps.items() %}
 Requires:           nodejs-{{depname}}{% endfor %}
 
@@ -31,8 +32,7 @@ This package provides the documentation for nodejs-{{barename}}.
 %endif
 
 %prep
-%setup -q
-
+%setup -q -n package
 {% for depname, version in dev_deps.items() %}
 %nodejs_fixdep --dev -r {{depname}}{% endfor %}
 
@@ -59,9 +59,9 @@ grunt test
 %endif
 
 %files
-%doc README.md LICENSE
-%{nodejs_sitelib}/grunt
+%doc README.md
+%{nodejs_sitelib}/{{barename}}/
 
 %changelog
-* {{date}} {{packager}} <{{email}}> {{version}}-1
-- initial package for Fedora
+* {{date}} {{packager}} <{{email}}> - {{version}}-1
+- Initial packaging for Fedora.

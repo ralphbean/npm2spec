@@ -292,9 +292,15 @@ class NPM2spec(object):
         self.summary = data['description']
         self.description = data['readme']
         self.license = data['license']
-        self.deps = data['versions'][self.version]['dependencies']
-        self.deps.update(data['versions'][self.version]['peerDependencies'])
-        self.dev_deps = data['versions'][self.version]['devDependencies']
+        latest = data['versions'][self.version]
+        self.deps = {}
+        if 'dependencies' in latest:
+            self.deps.update(latest['dependencies'])
+        if 'peerDependencies' in latest:
+            self.deps.update(latest['peerDependencies'])
+        self.dev_deps = {}
+        if 'devDependencies' in latest:
+            self.dev_deps.update(latest['devDependencies'])
 
 class NPM2specUI(object):
     """ Class handling the user interface. """
