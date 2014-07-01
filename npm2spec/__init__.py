@@ -426,7 +426,7 @@ class NPM2specUI(object):
         self.seen.add(package)
 
         parents = parents or []
-        import pkgwat.api
+        from sh import repoquery
         from spec import Spec
 
         def handle_deps(deps):
@@ -451,12 +451,11 @@ class NPM2specUI(object):
                     self.log.info('  local spec for nodejs-%s exists' % name)
                     continue
 
-                try:
-                    pkgwat.api.get('nodejs-' + name)
+                output = repoquery("npm(%s)" % name, whatprovides=True)
+                matches = [x for x in output.strip().split('\n') if x]
+                if len(matches) > 0:
                     self.log.info('  nodejs-%s is already packaged' % name)
                     continue
-                except KeyError:
-                    pass
 
                 self.workon(name, recurse, enable_tests, parents + [name])
 

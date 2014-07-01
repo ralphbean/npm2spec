@@ -16,7 +16,7 @@ download_url = "http://pypi.python.org/packages/source/p/npm2spec/npm2spec-%s.ta
 requirements = [
     'requests',
     'jinja2',
-    'pkgwat.api',
+    'sh',
 ]
 
 try:
