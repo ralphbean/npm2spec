@@ -24,6 +24,7 @@ import ConfigParser
 import logging
 import shutil
 import tarfile
+import tempfile
 import os
 import urllib2
 
@@ -259,9 +260,11 @@ class NPM2spec(object):
         sourcedir = get_rpm_tag('_sourcedir')
         tarball = "%s/%s" % (sourcedir, self.source)
         self.log.info("Opening: %s" % tarball)
+        self.extraction_path = tempfile.mkdtemp(prefix='npm2spec-')
+        self.extraction_path
         try:
             tar = tarfile.open(tarball)
-            tar.extractall()
+            tar.extractall(path=self.extraction_path)
             tar.close()
         except (TarError, IOError), err:
             self.log.debug("Error while extracting the tarball")
@@ -276,7 +279,7 @@ class NPM2spec(object):
             'NEWS', 'NEWS.md', 'NEWS.txt',
         ])
         try:
-            actual = set(os.listdir('package'))
+            actual = set(os.listdir(self.extraction_path + '/package'))
             return possible.intersection(actual)
         except Exception:
             return set(['COULDNT_DETECT_FILES'])
@@ -288,7 +291,7 @@ class NPM2spec(object):
             'tasks',
         ])
         try:
-            actual = set(os.listdir('package'))
+            actual = set(os.listdir(self.extraction_path + '/package'))
             definite = possible.intersection(actual)
             for item in actual:
                 if item not in definite and item.endswith('.js'):
@@ -301,7 +304,7 @@ class NPM2spec(object):
         """ Remove the source we extracted in the current working
         directory.
         """
-        source = 'package'
+        source = self.extraction_path
         self.log.info('Removing extracted sources: "%s"' % source)
         try:
             shutil.rmtree(source)
@@ -434,12 +437,9 @@ class NPM2specUI(object):
                     " -> ".join(parents + [name])
                 ))
 
-                try:
-                    pkgwat.api.get('nodejs-' + name)
-                    self.log.info('  nodejs-%s is already packaged' % name)
+                if name in ALREADY_PACKAGED:
+                    self.log.info('  %s packaged and in white list' % name)
                     continue
-                except KeyError:
-                    pass
 
                 specfile = os.path.expanduser(
                     '~/rpmbuild/SPECS/nodejs-%s' % name)
@@ -447,9 +447,12 @@ class NPM2specUI(object):
                     self.log.info('  local spec for nodejs-%s exists' % name)
                     continue
 
-                if name in ALREADY_PACKAGED:
-                    self.log.info('  %s packaged and in white list' % name)
+                try:
+                    pkgwat.api.get('nodejs-' + name)
+                    self.log.info('  nodejs-%s is already packaged' % name)
                     continue
+                except KeyError:
+                    pass
 
                 self.workon(name, recurse, enable_tests, parents + [name])
 
