@@ -35,6 +35,10 @@ LOG = logging.getLogger('NPM2spec')
 #LOG.setLevel('DEBUG')
 __version__ = '0.3.0'
 
+ALREADY_PACKAGED = [
+    'coffee-script',
+]
+
 
 def create_conf(configfile):
     """Check if the provided configuration file exists, generate the
@@ -266,7 +270,7 @@ class NPM2spec(object):
         """ Remove the source we extracted in the current working
         directory.
         """
-        source = '%s-%s' % (self.name, self.version)
+        source = 'package'
         self.log.info('Removing extracted sources: "%s"' % source)
         try:
             shutil.rmtree(source)
@@ -285,22 +289,32 @@ class NPM2spec(object):
         response = requests.get(url)
         data = response.json()
 
+        if 'versions' not in data:
+            raise ValueError("ridiculous")
+
         versions = [tuple(s.split('.')) for s in data['versions'].keys()]
         self.version = '.'.join(sorted(versions)[-1])
         self.source0 = data['versions'][self.version]['dist']['tarball']
         self.source = self.source0.rsplit('/')[-1]
         self.summary = data['description']
-        self.description = data['readme']
-        self.license = data['license']
+        self.description = data.get('readme', 'NO DESCRIPTION')
+        self.license = data.get('license', "NO LICENSE")
         latest = data['versions'][self.version]
+
         self.deps = {}
         if 'dependencies' in latest:
             self.deps.update(latest['dependencies'])
         if 'peerDependencies' in latest:
             self.deps.update(latest['peerDependencies'])
+
         self.dev_deps = {}
         if 'devDependencies' in latest:
             self.dev_deps.update(latest['devDependencies'])
+
+        self.test_command = None
+        scripts = latest.get('scripts', {})
+        if isinstance(scripts, dict):
+            self.test_command = scripts.get('test')
 
 class NPM2specUI(object):
     """ Class handling the user interface. """
@@ -310,6 +324,7 @@ class NPM2specUI(object):
         """
         self.parser = None
         self.log = get_logger()
+        self.seen = set()
 
     def setup_parser(self):
         """ Command line parser. """
@@ -319,8 +334,8 @@ class NPM2specUI(object):
             version='%(prog)s ' + __version__)
         self.parser.add_argument('package',
             help='Name of the npm library to package.')
-        self.parser.add_argument('--python3', action='store_true',
-            help='Create a specfile for both python2 and python3.')
+        self.parser.add_argument('--recurse', action='store_true',
+            help='Recursively generate specs for unpackaged deps.')
         self.parser.add_argument('--verbose', action='store_true',
             help='Give more info about what is going on.')
         self.parser.add_argument('--debug', action='store_true',
@@ -331,7 +346,6 @@ class NPM2specUI(object):
         Entry point of the program.
         """
         try:
-            from spec import Spec
             self.setup_parser()
             args = self.parser.parse_args()
 
@@ -341,18 +355,65 @@ class NPM2specUI(object):
             if args.debug:
                 self.log.setLevel('DEBUG')
 
-            npm = NPM2spec(args.package)
-            npm.retrieve_info()
-            npm.download()
-            npm.extract_sources()
-            npm.remove_sources()
-            settings = Settings()
-            spec = Spec(settings, npm, python3=args.python3)
-            spec.fill_spec_info()
-            spec.get_template()
-            spec.write_spec()
+            self.workon(args.package, args.recurse)
         except NPM2specError, err:
             print err
+
+    def workon(self, package, recurse, parents=None):
+        self.seen.add(package)
+
+        parents = parents or []
+        import pkgwat.api
+        from spec import Spec
+
+        def handle_deps(deps):
+            for name, version in deps.items():
+                if name in self.seen:
+                    self.log.info('  *****  Already seen %r' % name)
+                    continue
+                self.seen.add(name)
+                self.log.info("(%i) %s" % (
+                    len(self.seen),
+                    " -> ".join(parents + [name])
+                ))
+
+                try:
+                    pkgwat.api.get('nodejs-' + name)
+                    self.log.info('  nodejs-%s is already packaged' % name)
+                    continue
+                except KeyError:
+                    pass
+
+                specfile = os.path.expanduser(
+                    '~/rpmbuild/SPECS/nodejs-%s' % name)
+                if os.path.exists(specfile):
+                    self.log.info('  local spec for nodejs-%s exists' % name)
+                    continue
+
+                if name in ALREADY_PACKAGED:
+                    self.log.info('  %s packaged and in white list' % name)
+                    continue
+
+                self.workon(name, recurse, parents + [name])
+
+        npm = NPM2spec(package)
+        try:
+            npm.retrieve_info()
+        except ValueError:
+            return
+
+        if recurse:
+            handle_deps(npm.deps)
+            handle_deps(npm.dev_deps)
+
+        npm.download()
+        npm.extract_sources()
+        npm.remove_sources()
+        settings = Settings()
+        spec = Spec(settings, npm)
+        spec.fill_spec_info()
+        spec.get_template()
+        spec.write_spec()
 
 
 def main():

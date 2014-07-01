@@ -104,7 +104,7 @@ class Spec:
 
     def fill_spec_info(self):
         """ Fills the different variable required for the spec file. """
-        self.log.info('Filling spec variable from info collected')
+        self.log.debug('Filling spec variable from info collected')
 
         self.__dict['barename'] = self.package.name.replace('.', '-')
         if self.package.name.startswith('python-'):
@@ -130,6 +130,7 @@ class Spec:
         self.__dict['python3'] = self.python3
         self.__dict['deps'] = self.package.deps
         self.__dict['dev_deps'] = self.package.dev_deps
+        self.__dict['test_command'] = self.package.test_command
 
     def get_specfile(self):
         """ Return the path to the spec file.
@@ -157,7 +158,7 @@ class Spec:
         retrieved.
         """
         template = '%s/specfile.tpl' % os.path.dirname(__file__)
-        self.log.info('Filling spec template')
+        self.log.debug('Filling spec template')
         try:
             stream = open(template, 'r')
             tplfile = stream.read()
