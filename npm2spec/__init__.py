@@ -328,6 +328,7 @@ class NPM2spec(object):
 
         versions = [tuple(s.split('.')) for s in data['versions'].keys()]
         self.version = '.'.join(sorted(versions)[-1])
+
         self.source0 = data['versions'][self.version]['dist']['tarball']
         self.source = self.source0.rsplit('/')[-1]
         self.summary = data['description']
@@ -351,6 +352,9 @@ class NPM2spec(object):
         if isinstance(scripts, dict):
             self.test_command = scripts.get('test')
 
+        self.prerelease = None
+        if '-' in self.version:
+            self.version, self.prerelease = self.version.split('-')
 
     def prune_description(self, description):
         """ Return the first meaningful paragraph we can find. """

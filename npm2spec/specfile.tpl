@@ -1,9 +1,10 @@
 {% if test_command %}%global enable_tests {{enable_tests}}{% endif %}
+{% if prerelease %}%global prerelease {{prerelease}}{% endif %}
 %global barename {{barename}}
 
 Name:               nodejs-{{barename}}
 Version:            {{version}}
-Release:            1%{?dist}
+{% if prerelease %}Release:            0.1.%{prerelease}%{?dist}{% else %}Release:            1%{?dist}{% endif %}
 Summary:            {{summary}}
 
 Group:              Development/Libraries
@@ -64,5 +65,5 @@ cp -pr {{ " ".join(package_files) }} \
 %{nodejs_sitelib}/{{barename}}/
 
 %changelog
-* {{date}} {{packager}} <{{email}}> - {{version}}-1
+{% if prerelease %}* {{date}} {{packager}} <{{email}}> - {{version}}-0.1.{{prerelease}}{% else %}* {{date}} {{packager}} <{{email}}> - {{version}}-1{% endif %}
 - Initial packaging for Fedora.

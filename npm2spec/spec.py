@@ -114,15 +114,21 @@ class Spec:
 
         self.__dict['arch'] = self.package.arch
         self.__dict['version'] = self.package.version
+        self.__dict['prerelease'] = self.package.prerelease
         self.__dict['summary'] = self.package.summary
         self.__dict['license'] = self.package.license
         self.__dict['description'] = format_description(
             self.package.description)
         self.__dict['URL'] = self.package.url
+
         self.__dict['source0'] = self.package.source0
         self.__dict['_source0'] = self.package.source0\
                 .replace(self.package.name, "%{barename}")\
                 .replace(self.package.version, "%{version}")
+        if self.package.prerelease:
+            self.__dict['_source0'] = self.package.source0\
+                    .replace(self.package.prerelease, "%{prerelease}")
+
         self.__dict['packager'] = self.settings.get('packager')
         self.__dict['email'] = self.settings.get('email')
         self.__dict['date'] = datetime.datetime.now(
