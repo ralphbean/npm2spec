@@ -5,8 +5,14 @@ This project aims at providing an easy way to generate a spec file
 for projects hosted on npm:
 http://npmjs.org
 
+Important!  It can recursively extract and try to package dependencies.
+Try it like so:
+
+    $ npm2spec --verbose --recurse SOME_NPM_PACKAGE
+
 Dependencies:
 ------------
 - python-rdflib >= 3.0.0
 - python-argparse
 - python-jinja2
+- python-pkgwat-api
