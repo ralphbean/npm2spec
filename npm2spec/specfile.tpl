@@ -1,3 +1,4 @@
+{% if test_command %}%global enable_tests {{enable_tests}}{% endif %}
 %global barename {{barename}}
 
 Name:               nodejs-{{barename}}
@@ -16,8 +17,9 @@ BuildRequires:      nodejs-{{depname}}{% endfor %}
 {% for depname, version in deps.items() %}
 Requires:           nodejs-{{depname}}{% endfor %}
 {% if test_command %}
-# For tests{% for depname, version in dev_deps.items() %}
+%if 0%{?enable_tests}{% for depname, version in dev_deps.items() %}
 BuildRequires:      nodejs-{{depname}}{% endfor %}
+%endif
 {% endif %}
 
 %description
@@ -25,11 +27,15 @@ BuildRequires:      nodejs-{{depname}}{% endfor %}
 
 %prep
 %setup -q -n package
+
+# Remove bundled node_modules if there are any..
+rm -rf node_modules/
 {% for depname, version in deps.items() %}
 %nodejs_fixdep {{depname}}{% endfor %}
 {% if test_command %}
-# For tests{% for depname, version in dev_deps.items() %}
+%if 0%{?enable_tests}{% for depname, version in dev_deps.items() %}
 %nodejs_fixdep --dev {{depname}}{% endfor %}
+%endif
 {% else %}
 {% for depname, version in deps.items() %}
 %nodejs_fixdep --dev -r {{depname}}{% endfor %}
@@ -47,8 +53,10 @@ cp -pr {{ " ".join(package_files) }} \
 
 {% if test_command %}
 %check
+%if 0%{?enable_tests}
 %nodejs_symlink_deps --check
 {{test_command}}
+%endif
 {% endif %}
 
 %files

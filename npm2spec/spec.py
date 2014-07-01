@@ -92,7 +92,7 @@ class Spec:
         Write the spec file.
     """
 
-    def __init__(self, settings, package=None, python3=False):
+    def __init__(self, settings, package=None, enable_tests=False):
         """ Constructor.
         """
         self.package = package
@@ -100,7 +100,7 @@ class Spec:
         self.__dict = {}
         self.log = get_logger()
         self.spec = None
-        self.python3 = python3
+        self.enable_tests = int(enable_tests)
 
     def fill_spec_info(self):
         """ Fills the different variable required for the spec file. """
@@ -127,7 +127,7 @@ class Spec:
         self.__dict['email'] = self.settings.get('email')
         self.__dict['date'] = datetime.datetime.now(
             ).strftime("%a %b %d %Y")
-        self.__dict['python3'] = self.python3
+        self.__dict['enable_tests'] = self.enable_tests
         self.__dict['deps'] = self.package.deps
         self.__dict['dev_deps'] = self.package.dev_deps
         self.__dict['test_command'] = self.package.test_command

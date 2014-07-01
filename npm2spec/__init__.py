@@ -366,6 +366,8 @@ class NPM2specUI(object):
             help='Name of the npm library to package.')
         self.parser.add_argument('--recurse', action='store_true',
             help='Recursively generate specs for unpackaged deps.')
+        self.parser.add_argument('--enable-tests', action='store_true',
+            help='Turn on tests in the test suite(s).')
         self.parser.add_argument('--verbose', action='store_true',
             help='Give more info about what is going on.')
         self.parser.add_argument('--debug', action='store_true',
@@ -385,11 +387,11 @@ class NPM2specUI(object):
             if args.debug:
                 self.log.setLevel('DEBUG')
 
-            self.workon(args.package, args.recurse)
+            self.workon(args.package, args.recurse, args.enable_tests)
         except NPM2specError, err:
             print err
 
-    def workon(self, package, recurse, parents=None):
+    def workon(self, package, recurse, enable_tests, parents=None):
         self.seen.add(package)
 
         parents = parents or []
@@ -424,7 +426,7 @@ class NPM2specUI(object):
                     self.log.info('  %s packaged and in white list' % name)
                     continue
 
-                self.workon(name, recurse, parents + [name])
+                self.workon(name, recurse, enable_tests, parents + [name])
 
         npm = NPM2spec(package)
         try:
@@ -446,7 +448,7 @@ class NPM2specUI(object):
         npm.remove_sources()
 
         settings = Settings()
-        spec = Spec(settings, npm)
+        spec = Spec(settings, npm, enable_tests=enable_tests)
         spec.fill_spec_info()
         spec.get_template()
         spec.write_spec()
