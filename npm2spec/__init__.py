@@ -329,6 +329,7 @@ class NPM2spec(object):
         self.source = self.source0.rsplit('/')[-1]
         self.summary = data['description']
         self.description = data.get('readme', 'NO DESCRIPTION')
+        self.description = self.prune_description(self.description)
         self.license = data.get('license', "NO LICENSE")
         latest = data['versions'][self.version]
 
@@ -346,6 +347,28 @@ class NPM2spec(object):
         scripts = latest.get('scripts', {})
         if isinstance(scripts, dict):
             self.test_command = scripts.get('test')
+
+
+    def prune_description(self, description):
+        """ Return the first meaningful paragraph we can find. """
+
+        if not description:
+            return 'NO DESCRIPTION'
+
+        paragraphs = description.split('\n\n')
+        for paragraph in paragraphs:
+            if paragraph.strip().startswith('#'):
+                continue
+            if paragraph.strip().startswith('.. '):
+                continue
+            if paragraph.startswith('   '):
+                continue
+            if 'travis-ci' in paragraph:
+                continue
+            return paragraph
+
+        return paragraphs[0]
+
 
 class NPM2specUI(object):
     """ Class handling the user interface. """
@@ -401,6 +424,7 @@ class NPM2specUI(object):
 
         def handle_deps(deps):
             for name, version in deps.items():
+                name = name.replace('.', '-')
                 if name in self.seen:
                     self.log.info('  *****  Already seen %r' % name)
                     continue
