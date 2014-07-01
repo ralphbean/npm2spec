@@ -37,6 +37,7 @@ __version__ = '0.3.0'
 
 ALREADY_PACKAGED = [
     'coffee-script',
+    'npm',
 ]
 
 
