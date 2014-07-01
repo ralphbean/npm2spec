@@ -262,9 +262,23 @@ class NPM2spec(object):
             tar = tarfile.open(tarball)
             tar.extractall()
             tar.close()
-        except TarError, err:
+        except (TarError, IOError), err:
             self.log.debug("Error while extracting the tarball")
             self.log.debug("ERROR: %s" % err)
+
+    def get_doc_files(self):
+        possible = set([
+            'README', 'README.md', 'README.txt',
+            'LICENSE', 'LICENSE-MIT',
+            'CHANGELOG', 'CHANGELOG.md', 'CHANGELOG.txt',
+            'HISTORY', 'HISTORY.md', 'HISTORY.txt',
+            'NEWS', 'NEWS.md', 'NEWS.txt',
+        ])
+        try:
+            actual = set(os.listdir('package'))
+            return possible.intersection(actual)
+        except Exception:
+            return set(['COULDNT_DETECT_FILES'])
 
     def remove_sources(self):
         """ Remove the source we extracted in the current working
@@ -407,8 +421,12 @@ class NPM2specUI(object):
             handle_deps(npm.dev_deps)
 
         npm.download()
+
         npm.extract_sources()
+        doc_files = npm.get_doc_files()
+        npm.doc_files = doc_files
         npm.remove_sources()
+
         settings = Settings()
         spec = Spec(settings, npm)
         spec.fill_spec_info()

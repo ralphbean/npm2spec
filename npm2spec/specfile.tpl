@@ -52,7 +52,7 @@ cp -pr package.json lib/ \
 {% endif %}
 
 %files
-%doc README.md LICENSE
+%doc{% for filename in doc_files %} {{filename}}{% endfor %}
 %{nodejs_sitelib}/{{barename}}/
 
 %changelog
