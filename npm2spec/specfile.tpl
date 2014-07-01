@@ -40,7 +40,7 @@ BuildRequires:      nodejs-{{depname}}{% endfor %}
 
 %install
 mkdir -p %{buildroot}%{nodejs_sitelib}/{{barename}}
-cp -pr package.json lib/ \
+cp -pr {{ " ".join(package_files) }} \
     %{buildroot}%{nodejs_sitelib}/{{barename}}
 
 %nodejs_symlink_deps

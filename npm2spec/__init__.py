@@ -280,6 +280,22 @@ class NPM2spec(object):
         except Exception:
             return set(['COULDNT_DETECT_FILES'])
 
+    def get_package_files(self):
+        possible = set([
+            'package.json',
+            'lib',
+            'tasks',
+        ])
+        try:
+            actual = set(os.listdir('package'))
+            definite = possible.intersection(actual)
+            for item in actual:
+                if item not in definite and item.endswith('.js'):
+                    definite.add(item)
+            return definite
+        except Exception:
+            return set(['COULDNT_DETECT_FILES'])
+
     def remove_sources(self):
         """ Remove the source we extracted in the current working
         directory.
@@ -425,6 +441,8 @@ class NPM2specUI(object):
         npm.extract_sources()
         doc_files = npm.get_doc_files()
         npm.doc_files = doc_files
+        package_files = npm.get_package_files()
+        npm.package_files = package_files
         npm.remove_sources()
 
         settings = Settings()

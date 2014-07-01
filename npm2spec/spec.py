@@ -132,6 +132,7 @@ class Spec:
         self.__dict['dev_deps'] = self.package.dev_deps
         self.__dict['test_command'] = self.package.test_command
         self.__dict['doc_files'] = self.package.doc_files
+        self.__dict['package_files'] = self.package.package_files
 
     def get_specfile(self):
         """ Return the path to the spec file.
