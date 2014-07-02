@@ -481,7 +481,8 @@ class NPM2specUI(object):
         npm = NPM2spec(package)
         try:
             npm.retrieve_info()
-        except ValueError:
+        except ValueError, e:
+            self.log.error("Failure talking to npm: %r" % e)
             return
 
         if recurse:
