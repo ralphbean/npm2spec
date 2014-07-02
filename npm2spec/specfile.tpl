@@ -2,7 +2,7 @@
 {% if prerelease %}%global prerelease {{prerelease}}{% endif %}
 %global barename {{barename}}
 
-Name:               nodejs-{{barename}}
+Name:               nodejs-{{fixname}}
 Version:            {{version}}
 {% if prerelease %}Release:            0.1.%{prerelease}%{?dist}{% else %}Release:            1%{?dist}{% endif %}
 Summary:            {{summary}}
@@ -14,12 +14,12 @@ Source0:            {{_source0}}
 
 BuildRequires:      nodejs-packaging >= 6
 {% for depname, version in deps.items() %}
-BuildRequires:      nodejs-{{depname}}{% endfor %}
+BuildRequires:      nodejs-{{depname.replace('.', '-').replace('-_', '-')}}{% endfor %}
 {% for depname, version in deps.items() %}
-Requires:           nodejs-{{depname}}{% endfor %}
+Requires:           nodejs-{{depname.replace('.', '-').replace('-_', '-')}}{% endfor %}
 {% if test_command %}
 %if 0%{?enable_tests}{% for depname, version in dev_deps.items() %}
-BuildRequires:      nodejs-{{depname}}{% endfor %}
+BuildRequires:      nodejs-{{depname.replace('.', '-').replace('-_', '-')}}{% endfor %}
 %endif
 {% endif %}
 

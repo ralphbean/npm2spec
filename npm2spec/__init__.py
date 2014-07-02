@@ -445,7 +445,6 @@ class NPM2specUI(object):
 
         def handle_deps(deps):
             for name, version in deps.items():
-                name = name.replace('.', '-')
                 if name in self.seen:
                     self.log.info('  *****  Already seen %r' % name)
                     continue
