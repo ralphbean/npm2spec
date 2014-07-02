@@ -397,6 +397,8 @@ class NPM2specUI(object):
             help='Name of the npm library to package.')
         self.parser.add_argument('--recurse', action='store_true',
             help='Recursively generate specs for unpackaged deps.')
+        self.parser.add_argument('--recurse-devdeps', action='store_true',
+            help='Recursively generate specs for unpackaged dev deps.')
         self.parser.add_argument('--enable-tests', action='store_true',
             help='Turn on tests in the test suite(s).')
         self.parser.add_argument('--verbose', action='store_true',
@@ -418,11 +420,16 @@ class NPM2specUI(object):
             if args.debug:
                 self.log.setLevel('DEBUG')
 
-            self.workon(args.package, args.recurse, args.enable_tests)
+            self.workon(
+                args.package,
+                args.recurse,
+                args.recurse_devdeps,
+                args.enable_tests)
         except NPM2specError, err:
             print err
 
-    def workon(self, package, recurse, enable_tests, parents=None):
+    def workon(self, package, recurse, recurse_devdeps,
+               enable_tests, parents=None):
         self.seen.add(package)
 
         parents = parents or []
@@ -454,10 +461,15 @@ class NPM2specUI(object):
                 output = repoquery("npm(%s)" % name, whatprovides=True)
                 matches = [x for x in output.strip().split('\n') if x]
                 if len(matches) > 0:
-                    self.log.info('  nodejs-%s is already packaged' % name)
+                    self.log.info('  npm(%s) is already packaged' % name)
                     continue
 
-                self.workon(name, recurse, enable_tests, parents + [name])
+                self.workon(
+                    name,
+                    recurse,
+                    recurse_devdeps,
+                    enable_tests,
+                    parents + [name])
 
         npm = NPM2spec(package)
         try:
@@ -467,6 +479,8 @@ class NPM2specUI(object):
 
         if recurse:
             handle_deps(npm.deps)
+
+        if recurse_devdeps:
             handle_deps(npm.dev_deps)
 
         npm.download()

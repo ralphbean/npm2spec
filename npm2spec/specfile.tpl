@@ -36,9 +36,11 @@ rm -rf node_modules/
 {% if test_command %}
 %if 0%{?enable_tests}{% for depname, version in dev_deps.items() %}
 %nodejs_fixdep --dev {{depname}}{% endfor %}
+%else{% for depname, version in dev_deps.items() %}
+%nodejs_fixdep --dev -r {{depname}}{% endfor %}
 %endif
 {% else %}
-{% for depname, version in deps.items() %}
+{% for depname, version in dev_deps.items() %}
 %nodejs_fixdep --dev -r {{depname}}{% endfor %}
 {% endif %}
 
