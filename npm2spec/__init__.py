@@ -432,6 +432,13 @@ class NPM2specUI(object):
                enable_tests, parents=None):
         self.seen.add(package)
 
+        from sh import repoquery
+        output = repoquery("npm(%s)" % package, whatprovides=True)
+        matches = [x for x in output.strip().split('\n') if x]
+        if len(matches) > 0:
+            self.log.info('  npm(%s) is already packaged' % package)
+            return
+
         parents = parents or []
         from sh import repoquery
         from spec import Spec
