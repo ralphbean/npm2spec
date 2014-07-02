@@ -113,7 +113,7 @@ class Spec:
         self.__dict['arch'] = self.package.arch
         self.__dict['version'] = self.package.version
         self.__dict['prerelease'] = self.package.prerelease
-        self.__dict['summary'] = self.package.summary
+        self.__dict['summary'] = self.package.summary.strip(' .')
         self.__dict['license'] = self.package.license
         self.__dict['description'] = format_description(
             self.package.description)
