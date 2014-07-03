@@ -1,5 +1,5 @@
-pypi2spec
-=========
+npm2spec
+========
 
 This project aims at providing an easy way to generate a spec file
 for projects hosted on npm:
