@@ -1,3 +1,6 @@
+# This macro is needed at the start for building on EL6
+%{?nodejs_find_provides_and_requires}
+
 {% if test_command %}%global enable_tests {{enable_tests}}{% endif %}
 {% if prerelease %}%global prerelease {{prerelease}}{% endif %}
 %global barename {{barename}}
