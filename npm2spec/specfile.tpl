@@ -14,12 +14,12 @@ Source0:            {{_source0}}
 
 BuildRequires:      nodejs-packaging >= 6
 {% for depname, version in deps.items() %}
-BuildRequires:      nodejs-{{depname.replace('.', '-').replace('-_', '-')}}{% endfor %}
+BuildRequires:      npm({{depname.replace('.', '-').replace('-_', '-')}}){% endfor %}
 {% for depname, version in deps.items() %}
-Requires:           nodejs-{{depname.replace('.', '-').replace('-_', '-')}}{% endfor %}
+Requires:           npm({{depname.replace('.', '-').replace('-_', '-')}}){% endfor %}
 {% if test_command %}
 %if 0%{?enable_tests}{% for depname, version in dev_deps.items() %}
-BuildRequires:      nodejs-{{depname.replace('.', '-').replace('-_', '-')}}{% endfor %}
+BuildRequires:      npm({{depname.replace('.', '-').replace('-_', '-')}}){% endfor %}
 %endif
 {% endif %}
 
