@@ -347,6 +347,9 @@ class NPM2spec(object):
         if 'devDependencies' in latest:
             self.dev_deps.update(latest['devDependencies'])
 
+        self.fix_deps(self.deps)
+        self.fix_deps(self.dev_deps)
+
         self.test_command = None
         scripts = latest.get('scripts', {})
         if isinstance(scripts, dict):
@@ -355,6 +358,18 @@ class NPM2spec(object):
         self.prerelease = None
         if '-' in self.version:
             self.version, self.prerelease = self.version.split('-')
+
+    def fix_deps(self, deps):
+        """ Loosen the version constraint on all deps. """
+
+        for key in deps:
+            if not deps[key]:
+                continue
+            if 'x' in deps[key]:
+                continue
+            tokens = deps[key].split('.')
+            if len(tokens) > 1:
+                deps[key] = '.'.join(tokens[:-1] + ['x'])
 
     def prune_description(self, description):
         """ Return the first meaningful paragraph we can find. """
