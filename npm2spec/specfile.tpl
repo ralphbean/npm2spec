@@ -34,18 +34,12 @@ BuildRequires:      npm({{depname}}){% endfor %}
 
 # Remove bundled node_modules if there are any..
 rm -rf node_modules/
-{% for depname, version in deps.items() %}{% if not version.startswith('~') %}
-%nodejs_fixdep {{depname}} ~{{version}}{% endif %}{% endfor %}
-{% if test_command %}
-%if 0%{?enable_tests}{% for depname, version in dev_deps.items() %}{% if not version.startswith('~') %}
-%nodejs_fixdep --dev {{depname}} ~{{version}}{% endif %}{% endfor %}
-%else{% for depname, version in dev_deps.items() %}{% if not version.startswith('~') %}
-%nodejs_fixdep --dev -r {{depname}} ~{{version}}{% endif %}{% endfor %}
-%endif
-{% else %}
-{% for depname, version in dev_deps.items() %}
-%nodejs_fixdep --dev -r {{depname}}{% endfor %}
-{% endif %}
+
+%nodejs_fixdep --caret
+
+{% if test_command %}%if 0%{?enable_tests}
+%nodejs_fixdep --caret --dev
+%endif{% endif %}
 
 %build
 %nodejs_symlink_deps --build
