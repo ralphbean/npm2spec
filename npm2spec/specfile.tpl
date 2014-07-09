@@ -37,10 +37,6 @@ rm -rf node_modules/
 
 %nodejs_fixdep --caret
 
-{% if test_command %}%if 0%{?enable_tests}
-%nodejs_fixdep --caret --dev
-%endif{% endif %}
-
 %build
 %nodejs_symlink_deps --build
 
