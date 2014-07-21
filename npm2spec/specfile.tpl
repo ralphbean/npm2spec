@@ -14,6 +14,12 @@ Group:              Development/Libraries
 License:            {{license}}
 URL:                {{URL}}
 Source0:            {{_source0}}
+BuildArch:          noarch
+%if 0%{?fedora} >= 19
+ExclusiveArch:      %{nodejs_arches} noarch
+%else
+ExclusiveArch:      %{ix86} x86_64 %{arm} noarch
+%endif
 
 BuildRequires:      nodejs-packaging >= 6
 {% for depname, version in deps.items() %}
