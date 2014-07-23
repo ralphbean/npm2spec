@@ -328,14 +328,14 @@ class NPM2spec(object):
 
         versions = [tuple(s.split('.')) for s in data['versions'].keys()]
         self.version = '.'.join(sorted(versions)[-1])
+        latest = data['versions'][self.version]
 
         self.source0 = data['versions'][self.version]['dist']['tarball']
         self.source = self.source0.rsplit('/')[-1]
         self.summary = data['description']
         self.description = data.get('readme', 'NO DESCRIPTION')
         self.description = self.prune_description(self.description)
-        self.license = data.get('license', "NO LICENSE")
-        latest = data['versions'][self.version]
+        self.license = latest.get('license', "NO LICENSE")
 
         self.deps = {}
         if 'dependencies' in latest:
