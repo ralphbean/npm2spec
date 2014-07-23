@@ -272,8 +272,8 @@ class NPM2spec(object):
 
     def get_doc_files(self):
         possible = set([
-            'README', 'README.md', 'README.txt',
-            'LICENSE', 'LICENSE-MIT',
+            'README', 'README.md', 'README.txt', 'Readme.md',
+            'LICENSE', 'LICENSE-MIT', 'LICENSE.MIT',
             'CHANGELOG', 'CHANGELOG.md', 'CHANGELOG.txt',
             'HISTORY', 'HISTORY.md', 'HISTORY.txt',
             'NEWS', 'NEWS.md', 'NEWS.txt',
