@@ -10,12 +10,12 @@ Version:            {{version}}
 {% if prerelease %}Release:            0.1.%{prerelease}%{?dist}{% else %}Release:            1%{?dist}{% endif %}
 Summary:            {{summary}}
 
-Group:              Development/Libraries
 License:            {{license}}
 URL:                {{URL}}
 Source0:            {{_source0}}
 BuildArch:          noarch
-%if 0%{?fedora} >= 19
+
+%if 0%{?fedora}
 ExclusiveArch:      %{nodejs_arches} noarch
 %else
 ExclusiveArch:      %{ix86} x86_64 %{arm} noarch
