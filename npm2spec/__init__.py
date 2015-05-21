@@ -357,7 +357,7 @@ class NPM2spec(object):
 
         self.prerelease = None
         if '-' in self.version:
-            self.version, self.prerelease = self.version.split('-')
+            self.version, self.prerelease = self.version.split('-', 1)
 
     def fix_deps(self, deps):
         """ Loosen the version constraint on all deps. """
@@ -496,7 +496,7 @@ class NPM2specUI(object):
         try:
             npm.retrieve_info()
         except ValueError, e:
-            self.log.error("Failure talking to npm: %r" % e)
+            self.log.exception("Failure talking to npm: %r" % e)
             return
 
         if recurse:
